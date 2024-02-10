@@ -15,7 +15,7 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
 
     // Resources
     const s3Bucket = new s3.Bucket(this, 'S3Bucket', {
-      bucketName: `zachranka-screenshots-${scope.account}`
+      bucketName: `zachranka-screenshots-${this.account}`
     })
 
     const snapshotFunction = new lambda.Function(this, 'SnapshotFunction', {
@@ -37,7 +37,7 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
     s3Bucket.grantPut(snapshotFunction)
     s3Bucket.grantPutAcl(snapshotFunction)
 
-    let schedule = events.Schedule.expression('50 6 * * ? *')
+    let schedule = events.Schedule.expression('cron(50 6 * * ? *)')
     const snapshotFunctionCheckWebsiteScheduledEvent = new events.Rule(this, 'Rule', {
       schedule: schedule,
       targets: [new LambdaFunction(snapshotFunction, {retryAttempts: 5, maxEventAge: Duration.minutes(10)})]
