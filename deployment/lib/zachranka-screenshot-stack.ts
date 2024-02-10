@@ -22,9 +22,6 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
     // Resources
     const s3Bucket = new s3.CfnBucket(this, 'S3Bucket', {
     });
-    s3Bucket.cfnOptions.metadata = {
-      SamResourceId: 'S3Bucket',
-    };
 
     const snapshotFunctionRole = new iam.CfnRole(this, 'SnapshotFunctionRole', {
       assumeRolePolicyDocument: {
