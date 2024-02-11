@@ -21,7 +21,7 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
     const screenshotRole = new Role(this, 'screenshot-role', {assumedBy: new ServicePrincipal('lambda.amazonaws.com')})
 
     const snapshotFunction = new lambda.Function(this, 'SnapshotFunction', {
-      code: Code.fromAsset('../screenshot-lambda'),
+      code: Code.fromAsset('../screenshot-lambda/lambda'),
       functionName: 'zachranka-screenshot-function',
       handler: 'app.handler',
       memorySize: 4096,
