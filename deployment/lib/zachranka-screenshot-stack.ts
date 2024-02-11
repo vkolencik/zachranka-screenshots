@@ -1,10 +1,10 @@
 import * as cdk from 'aws-cdk-lib'
 import { Duration } from 'aws-cdk-lib'
-import * as events from 'aws-cdk-lib/aws-events'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
 import { Code, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda'
 import * as s3 from 'aws-cdk-lib/aws-s3'
-import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets'
+import { CfnSchedule } from 'aws-cdk-lib/aws-scheduler'
+import { PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
 
 export interface ZachrankaScreenshotStackProps extends cdk.StackProps {
 }
@@ -18,6 +18,8 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
       bucketName: `zachranka-screenshots-${this.account}`
     })
 
+    const screenshotRole = new Role(this, 'screenshot-role', {assumedBy: new ServicePrincipal('lambda.amazonaws.com')})
+
     const snapshotFunction = new lambda.Function(this, 'SnapshotFunction', {
       code: Code.fromAsset('../screenshot-lambda'),
       functionName: 'zachranka-screenshot-function',
@@ -29,6 +31,7 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
         targetUrl: 'https://kapacita.zachranka.cz/',
         s3Bucket: s3Bucket.bucketArn,
       },
+      role:screenshotRole,
       layers: [
         LayerVersion.fromLayerVersionArn(this, 'layer-version', `arn:aws:lambda:${this.region}:764866452798:layer:chrome-aws-lambda:22`),
       ],
@@ -37,10 +40,23 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
     s3Bucket.grantPut(snapshotFunction)
     s3Bucket.grantPutAcl(snapshotFunction)
 
-    let schedule = events.Schedule.expression('cron(50 6 * * ? *)')
-    const snapshotFunctionCheckWebsiteScheduledEvent = new events.Rule(this, 'Rule', {
-      schedule: schedule,
-      targets: [new LambdaFunction(snapshotFunction, {retryAttempts: 5, maxEventAge: Duration.minutes(10)})]
-    });
+    screenshotRole.assumeRolePolicy?.addStatements(new PolicyStatement({
+      actions: ['sts:AssumeRole'],
+      principals: [new ServicePrincipal('scheduler.amazonaws.com')],
+    }))
+
+    new CfnSchedule(this, 'trigger-schedule', {
+      scheduleExpression: 'cron(50 6 * * ? *)',
+      scheduleExpressionTimezone: 'Europe/Prague',
+      target: {
+        arn: snapshotFunction.functionArn,
+        retryPolicy: {
+          maximumEventAgeInSeconds: 600,
+          maximumRetryAttempts: 5
+        },
+        roleArn: screenshotRole.roleArn,
+      },
+      flexibleTimeWindow: {mode: "OFF"}
+    })
   }
 }
