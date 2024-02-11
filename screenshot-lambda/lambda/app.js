@@ -2,11 +2,14 @@
  *  SPDX-License-Identifier: MIT-0
  */
 
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import * as chromium from 'chrome-aws-lambda';
+const { PutObjectCommand, S3Client } = require('@aws-sdk/client-s3')
+const chromium = require('@sparticuz/chromium');
+const puppeteer = require('puppeteer-core');
 
 const pageURL = process.env.TARGET_URL
 const agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
+
+const client = new S3Client();
 
 exports.handler = async (event, context) => {
 
@@ -14,7 +17,7 @@ exports.handler = async (event, context) => {
   let browser = null;
 
   try {
-    browser = await chromium.puppeteer.launch({
+    browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath,
@@ -22,7 +25,7 @@ exports.handler = async (event, context) => {
       ignoreHTTPSErrors: true,
     });
 
-    let page = await browser.newPage();
+    const page = await browser.newPage();
     await page.setUserAgent(agent)
 
     console.log('Navigating to page: ', pageURL)

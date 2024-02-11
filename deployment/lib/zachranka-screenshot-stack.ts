@@ -33,7 +33,7 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
       },
       role:screenshotRole,
       layers: [
-        LayerVersion.fromLayerVersionArn(this, 'layer-version', `arn:aws:lambda:${this.region}:764866452798:layer:chrome-aws-lambda:22`),
+        LayerVersion.fromLayerVersionArn(this, 'layer-version', `arn:aws:lambda:eu-central-1:764866452798:layer:chrome-aws-lambda:42`),
       ],
     })
 
