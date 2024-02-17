@@ -15,7 +15,9 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
 
     // Resources
     const s3Bucket = new s3.Bucket(this, 'S3Bucket', {
-      bucketName: `zachranka-screenshots-${this.account}`
+      bucketName: `zachranka-screenshots-${this.account}`,
+      accessControl: s3.BucketAccessControl.PUBLIC_READ,
+      objectOwnership: s3.ObjectOwnership.OBJECT_WRITER
     })
 
     const screenshotRole = new Role(this, 'screenshot-role', {assumedBy: new ServicePrincipal('lambda.amazonaws.com')})
@@ -28,8 +30,8 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
       runtime: Runtime.NODEJS_20_X,
       timeout: Duration.minutes(2),
       environment: {
-        targetUrl: 'https://kapacita.zachranka.cz/',
-        s3Bucket: s3Bucket.bucketArn,
+        TARGET_URL: 'https://kapacita.zachranka.cz/',
+        S3_BUCKET: s3Bucket.bucketName,
       },
       role:screenshotRole,
       layers: [

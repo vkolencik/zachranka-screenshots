@@ -5,6 +5,7 @@
 const { PutObjectCommand, S3Client } = require('@aws-sdk/client-s3')
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
+const {setTimeout} = require ('node:timers/promises');
 
 const pageURL = process.env.TARGET_URL
 const agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
@@ -13,14 +14,13 @@ const client = new S3Client();
 
 exports.handler = async (event, context) => {
 
-  let result = null;
   let browser = null;
 
   try {
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath,
+      executablePath: await chromium.executablePath(),
       headless: chromium.headless,
       ignoreHTTPSErrors: true,
     });
@@ -30,38 +30,30 @@ exports.handler = async (event, context) => {
 
     console.log('Navigating to page: ', pageURL)
 
-    await page.goto(pageURL)
-    const buffer = await page.screenshot()
-    result = await page.title()
+    await page.goto(pageURL);
+    await setTimeout(2000);
+    const buffer = await page.screenshot();
 
     // upload the image using the current timestamp as filename
     const command = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET,
       Key: `${Date.now()}.png`,
       Body: buffer,
-      ContentType: 'image/png',
-      ACL: 'public-read'
+      ContentType: 'image/png'
     });
 
-    try {
-      const response = await client.send(command);
-      console.log(response);
-    } catch (err) {
-      console.error(err);
-    }
-
-    console.log('S3 response:', JSON.stringify(response))
+    const response = await client.send(command);
+    console.log('S3 response:', JSON.stringify(response));
 
     await page.close();
     await browser.close();
     
   } catch (error) {
     console.log(error)
+    throw error
   } finally {
     if (browser !== null) {
       await browser.close();
     }
   }
-
-  return result
 }
