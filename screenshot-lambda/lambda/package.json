@@ -10,6 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "puppeteer-core": "^22.0.0"
+    "puppeteer-core": "^24.2.0",
+    "@sparticuz/chromium": "^132.0.0"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.2.0"
   }
 }

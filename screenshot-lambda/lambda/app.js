@@ -3,36 +3,17 @@
  */
 
 const { PutObjectCommand, S3Client } = require('@aws-sdk/client-s3')
-const chromium = require('@sparticuz/chromium');
-const puppeteer = require('puppeteer-core');
 const {setTimeout} = require ('node:timers/promises');
-
-const pageURL = process.env.TARGET_URL
-const agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
+const {createScraper} = require("./scraper");
 
 const client = new S3Client();
 
 exports.handler = async (event, context) => {
 
-  let browser = null;
+  let scraper = createScraper();
 
   try {
-    browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-      ignoreHTTPSErrors: true,
-    });
-
-    const page = await browser.newPage();
-    await page.setUserAgent(agent)
-
-    console.log('Navigating to page: ', pageURL)
-
-    await page.goto(pageURL);
-    await setTimeout(2000);
-    const buffer = await page.screenshot();
+    const buffer = await scraper.page.screenshot();
 
     // upload the image using the current timestamp as filename
     const command = new PutObjectCommand({

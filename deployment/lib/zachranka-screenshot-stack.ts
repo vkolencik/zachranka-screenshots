@@ -33,7 +33,7 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
         TARGET_URL: 'https://kapacita.zachranka.cz/',
         S3_BUCKET: s3Bucket.bucketName,
       },
-      role:screenshotRole,
+      role: screenshotRole,
       layers: [
         LayerVersion.fromLayerVersionArn(this, 'layer-version', `arn:aws:lambda:eu-central-1:764866452798:layer:chrome-aws-lambda:42`),
       ],
