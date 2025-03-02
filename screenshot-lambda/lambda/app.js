@@ -10,9 +10,11 @@ const client = new S3Client();
 
 exports.handler = async (event, context) => {
 
-  let scraper = createScraper();
+  let scraper = null;
 
   try {
+    scraper = createScraper();
+
     const buffer = await scraper.page.screenshot();
 
     // upload the image using the current timestamp as filename
@@ -26,15 +28,13 @@ exports.handler = async (event, context) => {
     const response = await client.send(command);
     console.log('S3 response:', JSON.stringify(response));
 
-    await page.close();
-    await browser.close();
-    
+    await scraper.page.close();
   } catch (error) {
     console.log(error)
     throw error
   } finally {
-    if (browser !== null) {
-      await browser.close();
+    if (scraper.browser) {
+      await scraper.browser.close();
     }
   }
 }

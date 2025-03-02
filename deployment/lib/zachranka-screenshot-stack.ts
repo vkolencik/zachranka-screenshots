@@ -4,7 +4,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda'
 import { Code, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 import { CfnSchedule } from 'aws-cdk-lib/aws-scheduler'
-import { PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
+import {ManagedPolicy, PolicyStatement, Role, ServicePrincipal} from 'aws-cdk-lib/aws-iam'
 
 export interface ZachrankaScreenshotStackProps extends cdk.StackProps {
 }
@@ -15,16 +15,27 @@ export class ZachrankaScreenshotStack extends cdk.Stack {
 
     // Resources
     const s3Bucket = new s3.Bucket(this, 'S3Bucket', {
-      bucketName: `zachranka-screenshots-${this.account}`,
-      accessControl: s3.BucketAccessControl.PUBLIC_READ,
-      objectOwnership: s3.ObjectOwnership.OBJECT_WRITER
+      bucketName: `zachranka-screenshots-new-${this.account}`,
+      objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
+      blockPublicAccess: new s3.BlockPublicAccess({
+        blockPublicAcls: false,
+        blockPublicPolicy: false,
+        ignorePublicAcls: false,
+        restrictPublicBuckets: false
+      }),
+      publicReadAccess: true
     })
 
-    const screenshotRole = new Role(this, 'screenshot-role', {assumedBy: new ServicePrincipal('lambda.amazonaws.com')})
+    const screenshotRole = new Role(this, 'screenshot-role', {
+      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')
+      ]
+    })
 
     const snapshotFunction = new lambda.Function(this, 'SnapshotFunction', {
       code: Code.fromAsset('../screenshot-lambda/lambda'),
-      functionName: 'zachranka-screenshot-function',
+      functionName: 'zachranka-screenshot-new-function',
       handler: 'app.handler',
       memorySize: 4096,
       runtime: Runtime.NODEJS_20_X,
